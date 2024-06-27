@@ -133,7 +133,7 @@ def search():
         notes_list.clear()
         tags_list.clear()
 
-        notes_list.addItems(notes_filtred)
+        notes_list.addItems(notes_filtred)                      
         search_tag.setText('Сбросить')
 
     elif search_tag.text() == 'Сбросить':
@@ -162,3 +162,4 @@ notes_list.addItems(notes)
 window.setLayout(main_layout) # установка главной линии
 window.show() # отображение окна
 app.exec() # не закрывать приложение пока не нажмем на крестик
+
