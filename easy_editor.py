@@ -2,14 +2,19 @@ import os
 from PyQt5.QtWidgets import (
     QApplication, QWidget,
     QVBoxLayout, QHBoxLayout,
-    QPushButton, QListWidget, QLabel,QFileDialog)
+    QPushButton, QListWidget, QLabel,
+    QFileDialog)
+
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
+from PIL import Image, ImageFilter
 
 app = QApplication([])
 
 # Создание основного окна
 window = QWidget()
 window.resize(700, 500)
-window.setWindowTitle('Типо фотошоп')
+window.setWindowTitle('Фотошоп на минималках')
 
 # Создание виджетов
 folder = QPushButton('Папка')
@@ -79,21 +84,90 @@ QLabel {
     margin-bottom: 10px; /* Отступ снизу */
 }
 """
-#Функционал
+# Нужные переменные 
+
+workdir = ''
+current_image = None
+current_filename = None
+save_dir = 'Modified/'
+
+# Функционал
 def show_files():
+    global workdir
     workdir = QFileDialog.getExistingDirectory()
-    print(workdir)
     filenames = os.listdir(workdir)
     files.clear()
     for file in filenames:
-        for ext in ['.jpg','.jpeg','.png']:
-            if file.endswith(ext):
-                files.addItem(file)
+        if file.endswith('.jpeg') or file.endswith('.png'):
+            files.addItem(file)
+  
+def show_chosen_image():
+    filename = files.currentItem().text()
+    load_image(filename)
+    show_image(os.path.join(workdir, filename))
 
-    #files.addItems(filenames)
+def load_image(filename):
+    global current_image, current_filename
+    current_filename = filename
+    fullname = os.path.join(workdir, filename)
+    current_image = Image.open(fullname)
 
-#Подписки
+def show_image(path):
+    pixmapimage = QPixmap(path)
+    w, h = image.width(), image.height()
+    pixmapimage = pixmapimage.scaled(w,h, Qt.KeepAspectRatio)
+    image.setPixmap(pixmapimage)
+
+def save_image():
+    global current_image
+    path = os.path.join(workdir,save_dir)
+    if not (os.path.exists(path) or os.path.isdir(path)):
+        os.mkdir(path)
+    fullname = os.path.join(path,current_filename)
+    current_image.save(fullname)
+def do_left():
+    global current_image
+    current_image = current_image.transpose(Image.ROTATE_90)
+    save_image()
+    image_path = os.path.join(workdir,save_dir,current_filename)
+    show_image(image_path)
+
+def do_right():
+    global current_image
+    current_image = current_image.transpose(Image.ROTATE_270)
+    save_image()
+    image_path = os.path.join(workdir,save_dir,current_filename)
+    show_image(image_path)
+
+def do_flip():
+    global current_image
+    current_image = current_image.transpose(Image.FLIP_LEFT_RIGHT)
+    save_image()
+    image_path = os.path.join(workdir,save_dir,current_filename)
+    show_image(image_path)    
+
+def do_sharp():
+    global current_image
+    current_image = current_image.filter(ImageFilter.SHARPEN)
+    save_image()
+    image_path = os.path.join(workdir,save_dir,current_filename)
+    show_image(image_path)
+
+def do_gray():
+    global current_image
+    current_image = current_image.convert('L')
+    save_image()
+    image_path = os.path.join(workdir,save_dir,current_filename)
+    show_image(image_path)
+
+# Подписки
+files.currentRowChanged.connect(show_chosen_image)
 folder.clicked.connect(show_files)
+left.clicked.connect(do_left)
+right.clicked.connect(do_right)
+flip.clicked.connect(do_flip)
+sharp.clicked.connect(do_sharp)
+gray.clicked.connect(do_gray)
 # Применение стилей к главному окну
 window.setStyleSheet(style)
 
@@ -103,6 +177,3 @@ window.show()
 
 # Запуск приложения
 app.exec()
-
-
-#my teacher's git hub  https://github.com/AlgoClassWork/python_start_classwork/tree/main
