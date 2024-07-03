@@ -35,8 +35,22 @@ class Enemy(GameSprite):
             self.rect.x -= 5
         else:
             self.rect.x += 5
+class Wall(sprite.Sprite):
+    def __init__(self,x,y,w,h):
+        super().__init__()
+        self.width = w
+        self.height = h
+        self.wall = Surface((self.width,self.height))
+        self.wall.fill((87, 239, 67))
+        self.rect = self.wall.get_rect()
+        self.rect.x = x
+        self.rect.y = y
 
 
+    def update(self): 
+        window.blit(self.wall,(self.rect.x,self.rect.y))
+
+wall_1 = Wall(20,20,20,500)
 player = Player('hero.png',300,300)
 enemy = Enemy('cyborg.png',350,200)
 treasure = GameSprite('treasure.png',600,400)
@@ -63,6 +77,8 @@ while game:
     enemy.move()
     enemy.update()
     treasure.update()
+    wall_1.update()
+
 
     for e in event.get():
         if e.type == QUIT: 
