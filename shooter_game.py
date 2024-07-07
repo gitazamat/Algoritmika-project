@@ -45,7 +45,7 @@ for _ in range(5):
 
 # enemy = Enemy(sprite_img='ufo.png',cord_x=300,cord_y=0,width=100,height=100)
 window = display.set_mode((700,500))
-display.set_caption('Баку Гамасек трасуха')
+display.set_caption('Баку лох')
 
 
 background =  transform.scale(image.load('galaxy.jpg'),(700,500))
@@ -100,7 +100,6 @@ while game:
 
         if sprite.groupcollide(enemys,bullets,True,True):
             score += 1
-        # enemy = Enemy('ufo.png',randint(0,600),0,100,100,randint(1,3)) 
         enemys.add(enemy)    
 
         if lost > 4:
@@ -120,5 +119,5 @@ while game:
 
     clock.tick(50)
     display.update()
-    # baky lox😘
+  
 
