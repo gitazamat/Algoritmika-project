@@ -1,26 +1,28 @@
-# импортируем пайгейм
 import pygame
 import math
 from pygame.locals import *
 
 pygame.init()
-# параметры окна
+
 window_width = 800
 window_height = 600
 window = pygame.display.set_mode((window_width, window_height))
 pygame.display.set_caption('2д танчики')
 
 background = pygame.transform.scale(pygame.image.load('background.png'), (window_width, window_height))
-# класс gamesprite и другие
+
 class GameSprite(pygame.sprite.Sprite):
-    def __init__(self, sprite_img, x, y, width, height, speed):
+    def __init__(self, sprite_img, x, y, width, height, speed, route=None):
         super().__init__()
         self.original_image = pygame.transform.scale(pygame.image.load(sprite_img), (width, height))
-        self.image = self.original_image
+        self.image = self.original_image.copy()  # Создаем копию original_image
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.speed = speed
         self.angle = 0
+        self.route = route if route else []  # Инициализация маршрута
+        self.current_point_index = 0
+
 
     def fire(self):
         bullet_speed = 15
@@ -45,19 +47,24 @@ class GameSprite(pygame.sprite.Sprite):
         if self.angle < 0:
             self.angle += 360
 
+    def move_along_route(self):
+        if self.route:
+            target_point = self.route[self.current_point_index]
+            dx = target_point[0] - self.rect.centerx
+            dy = target_point[1] - self.rect.centery
+            dist = math.hypot(dx, dy)
+            if dist > self.speed:
+                dx = dx / dist * self.speed
+                dy = dy / dist * self.speed
+                self.rect.x += dx
+                self.rect.y += dy
+            else:
+                self.current_point_index = (self.current_point_index + 1) % len(self.route)
+
     def update(self):
         self.image = pygame.transform.rotate(self.original_image, self.angle)
         self.rect = self.image.get_rect(center=self.rect.center)
-
-    def follow_player(self, player):
-        dx = player.rect.centerx - self.rect.centerx
-        dy = player.rect.centery - self.rect.centery
-        dist = math.hypot(dx, dy)
-        if dist != 0:
-            dx /= dist
-            dy /= dist
-        self.rect.x += dx * self.speed
-        self.rect.y += dy * self.speed
+        self.move_along_route()  # Исправлено: добавлены скобки ()
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle, speed):
@@ -81,34 +88,37 @@ class Barrier(pygame.sprite.Sprite):
 def respawn_enemy(enemy_class, x, y, width, height, speed, delay):
     pygame.time.set_timer(pygame.USEREVENT + 1, delay)
     return GameSprite(sprite_img=enemy_class, x=x, y=y, width=width, height=height, speed=speed)
-# отображение игроков и врагов
-player = GameSprite(sprite_img='player.png', x=350, y=300, width=50, height=50, speed=10)
+
+# Создание игрока и врагов с маршрутом
+player = GameSprite(sprite_img='player.png', x=100, y=300, width=50, height=50, speed=3)
+
+enemy_route = [(100, 100), (300, 100), (300, 300), (100, 300)]
+enemy = GameSprite(sprite_img='enemy.png', x=100, y=100, width=50, height=50, speed=2, route=enemy_route)
 
 enemies = pygame.sprite.Group()
-enemy1 = GameSprite(sprite_img='player1.png', x=340, y=280, width=45, height=45, speed=1)
-enemy2 = GameSprite(sprite_img='player2.png', x=330, y=290, width=45, height=45, speed=2)
-enemy3 = GameSprite(sprite_img='player3.png', x=320, y=220, width=45, height=45, speed=3)
-enemies.add(enemy1, enemy2, enemy3)
-# отображение бареров 
+enemies.add(enemy)
+
 barriers = pygame.sprite.Group()
 barrier1 = Barrier(200, 300, 100, 20)
 barrier2 = Barrier(400, 200, 20, 150)
 barriers.add(barrier1, barrier2)
-# отображение пули
+
 bullets = pygame.sprite.Group()
 
 clock = pygame.time.Clock()
 running = True
-end = 0
-# основной цикл
+respawn_timer = None
+
 while running:
+    current_time = pygame.time.get_ticks()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 player.rotate(45)
-            if event.key == pygame.K_SPACE: 
+            if event.key == pygame.K_SPACE:
                 player.fire()
         elif event.type == pygame.USEREVENT + 1:
             enemy1 = respawn_enemy('player1.png', 340, 280, 45, 45, 1, 0)
@@ -118,6 +128,15 @@ while running:
 
     window.blit(background, (0, 0))
 
+    # Проверка столкновения игрока с врагами
+    if pygame.sprite.spritecollide(player, enemies, False):
+        respawn_timer = current_time + 3000
+
+    # Если таймер возрождения истек, восстанавливаем игрока
+    if respawn_timer and current_time >= respawn_timer:
+        player.rect.center = (100, 300)  # Восстановить начальные координаты игрока
+        respawn_timer = None  # Сбросить таймер возрождения
+
     player.move()
     player.update()
 
@@ -126,7 +145,6 @@ while running:
             player.rect.clamp_ip(window.get_rect())
 
     for enemy in enemies:
-        enemy.follow_player(player)
         enemy.move()
         enemy.update()
 
@@ -136,9 +154,6 @@ while running:
         hit_enemies = pygame.sprite.spritecollide(bullet, enemies, True)
         if hit_enemies:
             bullets.remove(bullet)
-            for hit_enemy in hit_enemies:
-                enemies.remove(hit_enemy)
-                pygame.time.set_timer(pygame.USEREVENT + 1, 3000)
 
     for barrier in barriers:
         pygame.draw.rect(window, (0, 0, 0, 0), barrier.rect)
@@ -147,10 +162,6 @@ while running:
     for enemy in enemies:
         window.blit(enemy.image, enemy.rect)
 
-    end += 20
-    if end > 100000000:
-        print("Азамат победил😎")
-        event.type = False
     pygame.display.flip()
     clock.tick(60)
 
