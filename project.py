@@ -91,12 +91,12 @@ def respawn_enemy(enemy_class, x, y, width, height, speed, delay):
 player = GameSprite(sprite_img='player.png', x=100, y=300, width=50, height=50, speed=3)
 
 # Define routes for each enemy tank
-enemy_route1 = [(600, 400), (750, 400), (750, 550), (600, 550)]  # Bottom-right corner
-enemy_route2 = [(50, 50), (750, 50), (750, 150), (50, 150)]  # Top periphery
-enemy_route3 = [(650, 300), (750, 300)]  # Closer to goal, middle horizontal line
+enemy_route1 = [(650, 450), (650, 350), (500, 350), (500, 450)]  # Bottom-right corner
+enemy_route2 = [(650 , 270), (650, 130), (500, 130), (500, 270)]  # Top periphery
+enemy_route3 = [(650, 300), (700, 300)]  # Closer to goal, middle horizontal line
 
-enemy1 = GameSprite(sprite_img='enemy.png', x=600, y=400, width=50, height=50, speed=2, route=enemy_route1)
-enemy2 = GameSprite(sprite_img='enemy.png', x=50, y=50, width=50, height=50, speed=2, route=enemy_route2)
+enemy1 = GameSprite(sprite_img='enemy.png', x=650, y=400, width=50, height=50, speed=2, route=enemy_route1)
+enemy2 = GameSprite(sprite_img='enemy.png', x=650, y=150, width=50, height=50, speed=2, route=enemy_route2)
 enemy3 = GameSprite(sprite_img='enemy.png', x=650, y=300, width=50, height=50, speed=2, route=enemy_route3)
 
 enemies = pygame.sprite.Group()
