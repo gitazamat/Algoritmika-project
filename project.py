@@ -4,6 +4,8 @@ from pygame.locals import *
 
 pygame.init()
 
+pygame.init()
+
 window_width = 800
 window_height = 600
 window = pygame.display.set_mode((window_width, window_height))
@@ -64,7 +66,7 @@ class GameSprite(pygame.sprite.Sprite):
     def update(self):
         self.image = pygame.transform.rotate(self.original_image, self.angle)
         self.rect = self.image.get_rect(center=self.rect.center)
-        self.move_along_route()  # Исправлено: добавлены скобки ()
+        self.move_along_route()  
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle, speed):
@@ -98,17 +100,21 @@ enemy = GameSprite(sprite_img='enemy.png', x=100, y=100, width=50, height=50, sp
 enemies = pygame.sprite.Group()
 enemies.add(enemy)
 
+goal = GameSprite('goal.png', 700, 300,70,70,0)
+
 barriers = pygame.sprite.Group()
 barrier1 = Barrier(200, 300, 100, 20)
 barrier2 = Barrier(400, 200, 20, 150)
 barriers.add(barrier1, barrier2)
 
 bullets = pygame.sprite.Group()
-
+pygame.font.init()
+font1 = pygame.font.Font(None, 35)
+text1 = font1.render('Вы выйграли',1,(255,255,255))
 clock = pygame.time.Clock()
 running = True
 respawn_timer = None
-
+window.blit(text1, (20,50))
 while running:
     current_time = pygame.time.get_ticks()
 
@@ -129,8 +135,9 @@ while running:
     window.blit(background, (0, 0))
 
     # Проверка столкновения игрока с врагами
-    if pygame.sprite.spritecollide(player, enemies, False):
-        respawn_timer = current_time + 3000
+    if player.rect.colliderect(goal.rect):
+        running = False
+
 
     # Если таймер возрождения истек, восстанавливаем игрока
     if respawn_timer and current_time >= respawn_timer:
@@ -139,13 +146,14 @@ while running:
 
     player.move()
     player.update()
-
+    goal.update()
+    window.blit(goal.image, goal.rect)
     for barrier in barriers:
         if player.rect.colliderect(barrier.rect):
             player.rect.clamp_ip(window.get_rect())
 
     for enemy in enemies:
-        enemy.move()
+        # enemy.move()
         enemy.update()
 
     bullets.update()
@@ -161,7 +169,7 @@ while running:
     window.blit(player.image, player.rect)
     for enemy in enemies:
         window.blit(enemy.image, enemy.rect)
-
+    
     pygame.display.flip()
     clock.tick(60)
 
